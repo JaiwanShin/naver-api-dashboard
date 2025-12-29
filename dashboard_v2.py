@@ -24,118 +24,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# 스타일 적용 (Professional Modern Dark Theme)
-st.markdown("""
-<style>
-    /* 1. 폰트 및 기본 설정 (Pretendard 적용) */
-    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Pretendard', sans-serif;
-    }
-
-    /* 2. 배경 및 메인 컬러 조정 */
-    .stApp {
-        background-color: #0e1117; /* Streamlit 기본 Dark보다 약간 더 깊은 색 */
-    }
-    
-    /* 3. 컨테이너(카드) 디자인 - 핵심: 콘텐츠를 카드 안에 가두기 */
-    div.css-1r6slb0, div.stDataFrame, div.stPlotlyChart {
-        background-color: #1a1c24;
-        border: 1px solid #2d2f3b;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
-
-    /* 4. 메트릭(지표) 카드 스타일 업그레이드 */
-    [data-testid="stMetric"] {
-        background-color: #262730;
-        border: 1px solid #363945;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
-    }
-    [data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        border-color: #4b5563;
-    }
-    [data-testid="stMetricLabel"] {
-        color: #ffffff !important;
-        font-size: 0.9rem;
-    }
-    [data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-weight: 700;
-        font-size: 1.8rem;
-    }
-
-    /* 5. 헤더 타이틀 스타일 */
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #4ade80, #3b82f6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #2d2f3b;
-    }
-
-    /* 6. 사이드바 스타일 정리 */
-    [data-testid="stSidebar"] {
-        background-color: #111319;
-        border-right: 1px solid #2d2f3b;
-    }
-    
-    /* 7. 탭 스타일 (깔끔한 밑줄 형태로 변경) */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2rem;
-        background-color: transparent;
-        padding-bottom: 1rem;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: transparent;
-        border-radius: 4px;
-        color: #ffffff;
-        font-weight: 600;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: transparent !important;
-        color: #60a5fa !important; /* 선택된 탭 색상 (파랑) */
-        border-bottom: 2px solid #60a5fa;
-    }
-
-    /* 8. 버튼 스타일 (그라디언트 제거하고 깔끔하게) */
-    div.stButton > button {
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-    div.stButton > button:hover {
-        background-color: #1d4ed8;
-        transform: scale(1.02);
-    }
-    
-    /* 9. 경고/알림 박스 스타일 */
-    .stAlert {
-        background-color: #1a1c24;
-        border: 1px solid #3b82f6;
-        color: white;
-    }
-</style>
-""", unsafe_allow_html=True)
+# 스타일 적용 (기본 테마 사용)
+# 사용자 요청으로 커스텀 CSS 제거됨
 
 # 헤더
-st.markdown('<h1 class="main-header">📊 시장 트렌드 대시보드</h1>', unsafe_allow_html=True)
+st.title("📊 시장 트렌드 대시보드")
 st.markdown("---")
 
 # 클라이언트 초기화
@@ -188,52 +81,64 @@ def cached_keyword_stats(keywords_tuple):
     search_ad_client = NaverSearchAdClient()
     return search_ad_client.get_keyword_stats(list(keywords_tuple))
 
-@st.cache_resource
-def predict_with_prophet(df_input, time_unit, periods=4):
+@st.cache_data(ttl=600, show_spinner=False)
+def predict_with_linear_regression(df_input, time_unit, periods=4):
     """
-    Prophet을 이용한 시계열 예측 (캐싱 적용)
+    간단한 선형 회귀를 이용한 트렌드 예측
     - df_input: 'ds', 'y' 컬럼을 가진 DataFrame
     - time_unit: 'month', 'week', 'date'
+    - periods: 예측할 기간 수
+    
+    Returns: dict with 'current', 'forecast', 'forecast_lower', 'forecast_upper', 'trend_slope'
     """
+    import numpy as np
+    
     try:
-        # 데이터가 너무 적으면 예측 불가 (최소 2포인트 이상)
         if len(df_input) < 2:
             return None
-            
-        # 주기 설정
-        if time_unit == 'month':
-            freq = 'ME' # Pandas Future warning 대응 (M -> ME)
-            seasonality = {'yearly': True, 'weekly': False, 'daily': False}
-        elif time_unit == 'week':
-            freq = 'W'
-            seasonality = {'yearly': True, 'weekly': False, 'daily': False} # 주간 데이터는 연간 패턴만
-        else: # date
-            freq = 'D'
-            seasonality = {'yearly': True, 'weekly': True, 'daily': False}
-
-        # 모델 생성 및 학습
-        model = Prophet(
-            yearly_seasonality=seasonality['yearly'],
-            weekly_seasonality=seasonality['weekly'],
-            daily_seasonality=seasonality['daily'],
-            changepoint_prior_scale=0.05, # 트렌드 유연성 (기본값)
-            seasonality_prior_scale=10.0,
-            interval_width=0.8 # 80% 예측구간
-        )
         
-        # 한국 공휴일 추가 (패키지 내장 기능 활용)
-        model.add_country_holidays(country_name='KR')
+        # y 값 추출
+        y_values = df_input["y"].values
+        x_values = np.arange(len(y_values))
         
-        model.fit(df_input)
+        # 선형 회귀 (y = slope * x + intercept)
+        slope, intercept = np.polyfit(x_values, y_values, 1)
         
-        # 미래 데이터프레임 생성
-        future = model.make_future_dataframe(periods=periods, freq=freq)
-        forecast = model.predict(future)
+        # 현재값 (최근 4개 평균)
+        recent_n = min(4, len(y_values))
+        current_avg = np.mean(y_values[-recent_n:])
         
-        return forecast
+        # 미래 예측 (다음 periods 개 포인트)
+        future_x = np.arange(len(y_values), len(y_values) + periods)
+        future_predictions = slope * future_x + intercept
+        
+        # 예측 평균
+        forecast_avg = np.mean(future_predictions)
+        
+        # 신뢰구간 계산 (표준오차 기반)
+        # 잔차의 표준편차를 이용하여 예측 구간 설정
+        fitted_values = slope * x_values + intercept
+        residuals = y_values - fitted_values
+        std_error = np.std(residuals)
+        
+        # 80% 신뢰구간 (z=1.28)
+        margin = 1.28 * std_error * np.sqrt(1 + 1/len(y_values))
+        forecast_lower = max(0, forecast_avg - margin)
+        forecast_upper = forecast_avg + margin
+        
+        # 음수 보정
+        forecast_avg = max(0, forecast_avg)
+        
+        return {
+            "current": current_avg,
+            "forecast": forecast_avg,
+            "forecast_lower": forecast_lower,
+            "forecast_upper": forecast_upper,
+            "slope": slope,  # 양수면 상승 추세, 음수면 하락 추세
+            "std_error": std_error
+        }
         
     except Exception as e:
-        # st.error(f"Prophet Error: {e}") # 디버깅용
         return None
 
 # ===== 에러 표시 헬퍼 함수 =====
@@ -481,39 +386,25 @@ with tab1:
                             kw_data = kw_data.rename(columns={"period": "ds", "ratio": "y"})
                             
                             if len(kw_data) >= 2:
-                                # Prophet 예측 수행
-                                forecast = predict_with_prophet(kw_data, time_unit, periods=4)
+                                # 선형 회귀 예측 수행
+                                result = predict_with_linear_regression(kw_data, time_unit, periods=4)
                                 
-                                if forecast is not None:
-                                    # 최근 기준값 A (최근 4개 포인트 평균 vs 최근 실제값)
-                                    # Prophet은 노이즈를 제거한 trend를 주므로, 최근 trend 평균을 사용하는 것이 더 안정적일 수 있음
-                                    # 사용자 요구사항: "최근 4개 포인트(주/월) 평균" (Data)
-                                    recent_n = min(4, len(kw_data))
-                                    A = kw_data["y"].iloc[-recent_n:].mean()
-                                    
-                                    # 향후 예측값 F (향후 4개 포인트 예측 평균)
-                                    # forecast의 마지막 4개가 미래 예측값임
-                                    future_forecast = forecast.iloc[-4:]
-                                    
-                                    # 예측값(yhat), 하한(yhat_lower), 상한(yhat_upper)
-                                    F = future_forecast["yhat"].mean()
-                                    F_lower = future_forecast["yhat_lower"].mean()
-                                    F_upper = future_forecast["yhat_upper"].mean()
-                                    
-                                    # 음수 보정
-                                    F = max(F, 0)
-                                    F_lower = max(F_lower, 0)
-                                    F_upper = max(F_upper, 0)
+                                if result is not None:
+                                    A = result["current"]
+                                    F = result["forecast"]
+                                    F_lower = result["forecast_lower"]
+                                    F_upper = result["forecast_upper"]
+                                    slope = result["slope"]
                                     
                                     # 변화율 계산
                                     delta = (F - A) / max(A, eps)
                                     delta_lower = (F_lower - A) / max(A, eps)
                                     delta_upper = (F_upper - A) / max(A, eps)
                                     
-                                    # 라벨 결정 (예측구간 기반)
-                                    if delta_lower > tau:
+                                    # 라벨 결정 (기울기 + 변화율 기반)
+                                    if slope > 0.5 and delta > tau:
                                         trend = "📈 상승"
-                                    elif delta_upper < -tau:
+                                    elif slope < -0.5 and delta < -tau:
                                         trend = "📉 하락"
                                     else:
                                         trend = "➡️ 유지"
@@ -525,19 +416,18 @@ with tab1:
                                     
                                     predictions.append({
                                         "키워드": kw, 
-                                        "현재": A, 
-                                        "3개월 후 예측": F,
-                                        "예측하한": F_lower,
-                                        "예측상한": F_upper,
-                                        "변화율": delta * 100, 
-                                        "변화율하한": delta_lower * 100,
+                                        "현재": round(A, 2), 
+                                        "3개월 후 예측": round(F, 2),
+                                        "예측하한": round(F_lower, 2),
+                                        "예측상한": round(F_upper, 2),
+                                        "변화율": round(delta * 100, 2), 
                                         "추세": trend,
                                         "저베이스": is_low_base
                                     })
                                 else:
                                     # 예측 실패 시 (데이터 부족 등)
                                     predictions.append({
-                                        "키워드": kw, "현재": 0, "3개월 후 예측": 0, "변화율": 0, "추세": "❓ 데이터 부족", "전망": "데이터 부족"
+                                        "키워드": kw, "현재": 0, "3개월 후 예측": 0, "변화율": 0, "추세": "❓ 데이터 부족"
                                     })
                         
                         pred_df = pd.DataFrame(predictions) if predictions else None
@@ -583,10 +473,10 @@ with tab1:
             plot_bgcolor='rgba(0,0,0,0)',
             font_family="Pretendard",
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
-            margin=dict(l=20, r=20, t=40, b=20),
+            legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="right", x=1),
+            margin=dict(l=20, r=20, t=80, b=20),
             height=500,
-            xaxis=dict(rangeslider=dict(visible=True), type="date")
+            xaxis=dict(rangeslider=dict(visible=False), type="date")
         )
 
         fig.update_traces(line=dict(width=3))
@@ -623,15 +513,18 @@ with tab1:
             # 예측 방법론 설명
             with st.expander("📐 트렌드 예측 방법론"):
                 st.markdown("""
-                ### 🔮 예측 알고리즘: **Prophet (Trend + Seasonality)**
+                ### 🔮 예측 알고리즘: **선형 회귀 (Linear Regression)**
                 - **입력**: 기간별 검색지수 (0~100 상대값)
-                - **구성**: 트렌드(Trend) + 계절성(Seasonality) + 휴일 효과(Holidays)
-                - **판정**: "최근 4주 평균 대비 향후 4주 예측 평균 변화율" + 예측구간(Confidence Interval)으로 결정
-                - **상세 기준**:
-                  - 📈 **상승**: 예측 하한선(최악의 경우)도 +10% 이상 상승할 때
-                  - 📉 **하락**: 예측 상한선(최선의 경우)도 -10% 이상 하락할 때
-                  - ➡️ **유지**: 그 외 (예측 불확실성이 크거나 변화가 미미할 때)
-                - **한계**: 단기 이벤트나 급격한 이슈 발생 시 예측 오차가 커질 수 있습니다.
+                - **방식**: 과거 데이터 포인트에 최적 직선(y = ax + b)을 적합시켜 미래 4개 포인트를 외삽(Extrapolation)
+                - **현재값**: 최근 4개 포인트의 평균
+                - **예측값**: 미래 4개 포인트 예측의 평균
+                - **신뢰구간**: 잔차(Residual)의 표준오차 기반 80% 신뢰구간
+                - **판정 기준**:
+                  - 📈 **상승**: 기울기(slope) > 0.5 AND 예측 변화율 > +10%
+                  - 📉 **하락**: 기울기(slope) < -0.5 AND 예측 변화율 < -10%
+                  - ➡️ **유지**: 그 외 (추세가 약하거나 변화가 미미할 때)
+                - **장점**: 빠르고 안정적, 적은 데이터에서도 작동
+                - **한계**: 비선형 패턴이나 계절성은 반영하지 못함
                 """)
         
         # 📥 결과 내보내기
@@ -872,10 +765,10 @@ with tab2:
             plot_bgcolor='rgba(0,0,0,0)',
             font_family="Pretendard",
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
-            margin=dict(l=20, r=20, t=40, b=20),
+            legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="right", x=1),
+            margin=dict(l=20, r=20, t=80, b=20),
             height=500,
-            xaxis=dict(rangeslider=dict(visible=True), type="date")
+            xaxis=dict(rangeslider=dict(visible=False), type="date")
         )
         fig.update_traces(line=dict(width=3))
         st.plotly_chart(fig, use_container_width=True)

@@ -24,8 +24,77 @@ st.set_page_config(
     layout="wide"
 )
 
-# 스타일 적용 (기본 테마 사용)
-# 사용자 요청으로 커스텀 CSS 제거됨
+# 스타일 적용
+st.markdown("""
+<style>
+    /* 1. 폰트 및 기본 설정 (Pretendard 적용) */
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Pretendard', sans-serif;
+    }
+
+    /* 2. 배경 및 메인 컬러 조정 */
+    .stApp {
+        background-color: #0e1117; /* Streamlit 기본 Dark보다 약간 더 깊은 색 */
+    }
+    
+    /* 3. 컨테이너(카드) 디자인 */
+    div[data-testid="stMetric"], div[data-testid="stDataFrame"], div.stPlotlyChart {
+        background-color: #1a1c24;
+        border: 1px solid #2d2f3b;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 4. 헤더 및 텍스트 스타일 */
+    h1, h2, h3 {
+        color: #fafafa !important;
+        font-weight: 700 !important;
+    }
+    
+    /* 5. 탭 디자인 */
+    button[data-baseweb="tab"] {
+        background-color: transparent !important;
+        border: none !important;
+        color: #a0a0a0 !important;
+        font-weight: 600 !important;
+    }
+    
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #ffffff !important;
+        border-bottom: 2px solid #3b82f6 !important;
+    }
+    
+    /* 6. 버튼 스타일 */
+    div.stButton > button {
+        background-color: #2d2f3b;
+        color: white;
+        border: 1px solid #4b5563;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    div.stButton > button:hover {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    /* 7. 입력 필드 조정 */
+    div[data-baseweb="input"] {
+        background-color: #1a1c24 !important;
+        border: 1px solid #2d2f3b !important;
+        color: white !important; 
+    }
+    
+    /* 8. 사이드바 스타일 */
+    section[data-testid="stSidebar"] {
+        background-color: #11131a;
+        border-right: 1px solid #2d2f3b;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # 헤더
 st.title("📊 시장 트렌드 대시보드")

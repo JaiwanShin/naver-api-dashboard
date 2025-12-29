@@ -24,7 +24,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 스타일 적용
+# 스타일 적용 (Professional Modern Dark Theme)
 st.markdown("""
 <style>
     /* 1. 폰트 및 기본 설정 (Pretendard 적용) */
@@ -39,65 +39,103 @@ st.markdown("""
         background-color: #0e1117; /* Streamlit 기본 Dark보다 약간 더 깊은 색 */
     }
     
-    /* 3. 컨테이너(카드) 디자인 */
-    div[data-testid="stMetric"], div[data-testid="stDataFrame"], div.stPlotlyChart {
+    /* 3. 컨테이너(카드) 디자인 - 핵심: 콘텐츠를 카드 안에 가두기 */
+    div.css-1r6slb0, div.stDataFrame, div.stPlotlyChart {
         background-color: #1a1c24;
         border: 1px solid #2d2f3b;
         border-radius: 10px;
-        padding: 15px;
+        padding: 20px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
     }
 
-    /* 4. 헤더 및 텍스트 스타일 */
-    h1, h2, h3 {
-        color: #fafafa !important;
-        font-weight: 700 !important;
-    }
-    
-    /* 5. 탭 디자인 */
-    button[data-baseweb="tab"] {
-        background-color: transparent !important;
-        border: none !important;
-        color: #a0a0a0 !important;
-        font-weight: 600 !important;
-    }
-    
-    button[data-baseweb="tab"][aria-selected="true"] {
-        color: #ffffff !important;
-        border-bottom: 2px solid #3b82f6 !important;
-    }
-    
-    /* 6. 버튼 스타일 */
-    div.stButton > button {
-        background-color: #2d2f3b;
-        color: white;
-        border: 1px solid #4b5563;
+    /* 4. 메트릭(지표) 카드 스타일 업그레이드 */
+    [data-testid="stMetric"] {
+        background-color: #262730;
+        border: 1px solid #363945;
+        padding: 15px 20px;
         border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        border-color: #4b5563;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #ffffff !important;
+        font-size: 0.9rem;
+    }
+    [data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 1.8rem;
+    }
+
+    /* 5. 헤더 타이틀 스타일 */
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #4ade80, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #2d2f3b;
+    }
+
+    /* 6. 사이드바 스타일 정리 */
+    [data-testid="stSidebar"] {
+        background-color: #111319;
+        border-right: 1px solid #2d2f3b;
+    }
+    
+    /* 7. 탭 스타일 (깔끔한 밑줄 형태로 변경) */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2rem;
+        background-color: transparent;
+        padding-bottom: 1rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: transparent;
+        border-radius: 4px;
+        color: #ffffff;
+        font-weight: 600;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: transparent !important;
+        color: #60a5fa !important; /* 선택된 탭 색상 (파랑) */
+        border-bottom: 2px solid #60a5fa;
+    }
+
+    /* 8. 버튼 스타일 (그라디언트 제거하고 깔끔하게) */
+    div.stButton > button {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
         transition: all 0.2s;
     }
-    
     div.stButton > button:hover {
-        background-color: #3b82f6;
-        border-color: #3b82f6;
+        background-color: #1d4ed8;
+        transform: scale(1.02);
     }
     
-    /* 7. 입력 필드 조정 */
-    div[data-baseweb="input"] {
-        background-color: #1a1c24 !important;
-        border: 1px solid #2d2f3b !important;
-        color: white !important; 
-    }
-    
-    /* 8. 사이드바 스타일 */
-    section[data-testid="stSidebar"] {
-        background-color: #11131a;
-        border-right: 1px solid #2d2f3b;
+    /* 9. 경고/알림 박스 스타일 */
+    .stAlert {
+        background-color: #1a1c24;
+        border: 1px solid #3b82f6;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # 헤더
-st.title("📊 시장 트렌드 대시보드")
+st.markdown('<h1 class="main-header">📊 시장 트렌드 대시보드</h1>', unsafe_allow_html=True)
 st.markdown("---")
 
 # 클라이언트 초기화
@@ -158,7 +196,7 @@ def predict_with_linear_regression(df_input, time_unit, periods=4):
     - time_unit: 'month', 'week', 'date'
     - periods: 예측할 기간 수
     
-    Returns: dict with 'current', 'forecast', 'forecast_lower', 'forecast_upper', 'trend_slope'
+    Returns: dict with 'current', 'forecast', 'forecast_lower', 'forecast_upper', 'slope'
     """
     import numpy as np
     
@@ -185,7 +223,6 @@ def predict_with_linear_regression(df_input, time_unit, periods=4):
         forecast_avg = np.mean(future_predictions)
         
         # 신뢰구간 계산 (표준오차 기반)
-        # 잔차의 표준편차를 이용하여 예측 구간 설정
         fitted_values = slope * x_values + intercept
         residuals = y_values - fitted_values
         std_error = np.std(residuals)
@@ -203,7 +240,7 @@ def predict_with_linear_regression(df_input, time_unit, periods=4):
             "forecast": forecast_avg,
             "forecast_lower": forecast_lower,
             "forecast_upper": forecast_upper,
-            "slope": slope,  # 양수면 상승 추세, 음수면 하락 추세
+            "slope": slope,
             "std_error": std_error
         }
         
@@ -442,7 +479,7 @@ with tab1:
                         summary.columns = ["평균", "최고", "최저"]
                         pivot_df = df.pivot(index="period", columns="group", values="ratio")
                         
-                        # 트렌드 예측 (Prophet 기반)
+                        # 트렌드 예측 (선형 회귀 기반)
                         import numpy as np
                         predictions = []
                         tau = 0.10  # 변화율 임계값 (10%)
@@ -467,8 +504,6 @@ with tab1:
                                     
                                     # 변화율 계산
                                     delta = (F - A) / max(A, eps)
-                                    delta_lower = (F_lower - A) / max(A, eps)
-                                    delta_upper = (F_upper - A) / max(A, eps)
                                     
                                     # 라벨 결정 (기울기 + 변화율 기반)
                                     if slope > 0.5 and delta > tau:
@@ -542,7 +577,7 @@ with tab1:
             plot_bgcolor='rgba(0,0,0,0)',
             font_family="Pretendard",
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="right", x=1),
+            legend=dict(orientation="h", yanchor="bottom", y=1.15, xanchor="left", x=0),
             margin=dict(l=20, r=20, t=80, b=20),
             height=500,
             xaxis=dict(rangeslider=dict(visible=False), type="date")
@@ -584,7 +619,7 @@ with tab1:
                 st.markdown("""
                 ### 🔮 예측 알고리즘: **선형 회귀 (Linear Regression)**
                 - **입력**: 기간별 검색지수 (0~100 상대값)
-                - **방식**: 과거 데이터 포인트에 최적 직선(y = ax + b)을 적합시켜 미래 4개 포인트를 외삽(Extrapolation)
+                - **방식**: 과거 데이터에 최적 직선(y = ax + b)을 적합시켜 미래 4개 포인트를 외삽
                 - **현재값**: 최근 4개 포인트의 평균
                 - **예측값**: 미래 4개 포인트 예측의 평균
                 - **신뢰구간**: 잔차(Residual)의 표준오차 기반 80% 신뢰구간
@@ -834,7 +869,7 @@ with tab2:
             plot_bgcolor='rgba(0,0,0,0)',
             font_family="Pretendard",
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="right", x=1),
+            legend=dict(orientation="h", yanchor="bottom", y=1.15, xanchor="left", x=0),
             margin=dict(l=20, r=20, t=80, b=20),
             height=500,
             xaxis=dict(rangeslider=dict(visible=False), type="date")
@@ -1048,8 +1083,8 @@ with tab4:
                 plot_bgcolor='rgba(0,0,0,0)',
                 font_family="Pretendard",
                 hovermode="x unified",
-                legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
-                margin=dict(l=20, r=20, t=40, b=20),
+                legend=dict(orientation="h", yanchor="bottom", y=1.15, xanchor="left", x=0),
+                margin=dict(l=20, r=20, t=80, b=20),
                 height=500
             )
             fig.update_traces(line=dict(width=3))
@@ -1723,7 +1758,15 @@ with tab6:
                 title=f"{cat_name} 인기 키워드 비교",
                 template="plotly_dark"
             )
-            fig.update_layout(height=450, hovermode="x unified", xaxis=dict(rangeslider=dict(visible=True), type="date"))
+            fig.update_layout(
+                height=450, 
+                hovermode="x unified", 
+                xaxis=dict(rangeslider=dict(visible=False), type="date"),
+                legend=dict(orientation="h", yanchor="bottom", y=1.15, xanchor="left", x=0),
+                margin=dict(l=20, r=20, t=80, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
 
             st.plotly_chart(fig, use_container_width=True)
             st.info("ℹ️ **트렌드 지수**: 카테고리 내 검색 빈도의 상대적 지표(0~100)입니다.")
@@ -1898,7 +1941,7 @@ with tab7:
     st.subheader("🚀 시장 진입 분석")
     st.markdown("새로운 시장에 진입하기 위한 종합 분석 도구입니다.")
     
-    target_market = st.text_input("분석 시장", value="스킨케어 패드", key="market_entry_input")
+    target_market = st.text_input("분석 시장", value="스킨케어", key="market_entry_input")
     market_mode = st.radio("분석 유형", options=["size", "competition", "target"], 
                          format_func=lambda x: {"size":"📊 시장 규모 및 트렌드","competition":"⚔️ 경쟁 강도 분석","target":"🎯 타겟 고객층 정의"}[x], horizontal=True)
     
@@ -1940,7 +1983,12 @@ with tab7:
             if not t_df.empty:
                 st.subheader("📈 시장 관심도 변화 (최근 1년)")
                 fig = px.area(t_df, x="period", y="ratio", title=f"'{m_name}' 검색 트렌드", template="plotly_dark", color_discrete_sequence=["#667eea"])
-                fig.update_layout(xaxis=dict(rangeslider=dict(visible=True), type="date"))
+                fig.update_layout(
+                    xaxis=dict(rangeslider=dict(visible=False), type="date"),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=20, r=20, t=60, b=20)
+                )
                 st.plotly_chart(fig, use_container_width=True)
 
                 st.info("ℹ️ **검색 트렌드**: 지난 1년간 검색량 변화 추이입니다. (0~100, 최다 검색량=100)")
@@ -1950,9 +1998,52 @@ with tab7:
             col_c1, col_c2 = st.columns([2, 1])
             with col_c1:
                 st.subheader("📊 가격 분포 상세")
-                fig_box = px.box(df_v, y="lprice", title="상품 가격 분포 (박스 플롯)", points="all", 
-                               template="plotly_dark", color_discrete_sequence=["#6366f1"])
-                fig_box.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+                
+                # Box Plot (박스 플롯) - IQR 기반 Y축 범위로 찌부 방지
+                Q1 = df_v["lprice"].quantile(0.25)
+                Q3 = df_v["lprice"].quantile(0.75)
+                IQR = Q3 - Q1
+                y_max = min(df_v["lprice"].max(), Q3 + 2.5 * IQR)
+                y_min = max(0, Q1 - 1.5 * IQR)
+                
+                fig_box = px.box(
+                    df_v, 
+                    y="lprice", 
+                    title="상품 가격 분포 (박스 플롯)", 
+                    points="outliers",
+                    template="plotly_dark", 
+                    color_discrete_sequence=["#6366f1"],
+                    labels={"lprice": "가격 (원)"}
+                )
+                fig_box.update_layout(
+                    plot_bgcolor='rgba(0,0,0,0)', 
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    height=350,
+                    yaxis=dict(
+                        range=[y_min, y_max],
+                        tickformat=",.0f",
+                        title="가격 (원)"
+                    )
+                )
+                
+                # 한국어 hover 라벨 설정 (박스 플롯 통계 추가)
+                price_stats = {
+                    "최대": df_v["lprice"].max(),
+                    "Q3 (75%)": Q3,
+                    "중앙값": df_v["lprice"].median(),
+                    "Q1 (25%)": Q1,
+                    "최소": df_v["lprice"].min()
+                }
+                fig_box.update_traces(
+                    hovertemplate=(
+                        "<b>가격 분포</b><br>" +
+                        f"최대: {price_stats['최대']:,.0f}원<br>" +
+                        f"Q3 (75%): {price_stats['Q3 (75%)']:,.0f}원<br>" +
+                        f"중앙값: {price_stats['중앙값']:,.0f}원<br>" +
+                        f"Q1 (25%): {price_stats['Q1 (25%)']:,.0f}원<br>" +
+                        f"최소: {price_stats['최소']:,.0f}원<extra></extra>"
+                    )
+                )
                 st.plotly_chart(fig_box, use_container_width=True)
             
             with col_c2:

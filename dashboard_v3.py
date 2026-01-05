@@ -1905,7 +1905,7 @@ with tab6:
                 for i, row in enumerate(growth_df.itertuples()):
                     if i < len(cols):
                         with cols[i]:
-                            st.metric(label=row.키워드, value=f"{growth_df.iloc[i]['성장률']:.1f}%")
+                            st.metric(label=row.키워드, value=f"{growth_df.iloc[i]['성장률']:.2f}%")
 
                 # 상세 데이터 보기
                 with st.expander("📋 상세 데이터 보기 (Raw Data)"):

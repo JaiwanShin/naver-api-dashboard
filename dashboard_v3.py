@@ -1973,7 +1973,7 @@ with tab6:
                     # 연관 키워드 + 검색량 데이터 가져오기
                     all_keyword_data = []
                     for kw in keywords:
-                        df_kw = ad_client.get_related_keywords(kw, limit=20)
+                        df_kw = ad_client.get_related_keywords(kw, limit=100)
                         if not df_kw.empty:
                             df_kw["seed_keyword"] = kw
                             all_keyword_data.append(df_kw)
@@ -2024,7 +2024,7 @@ with tab6:
             display_df.columns = ["키워드", "PC 검색량", "모바일 검색량", "총 검색량", "경쟁도"]
             
             st.dataframe(
-                display_df.head(30),
+                display_df,
                 column_config={
                     "키워드": st.column_config.TextColumn("키워드", width="medium"),
                     "PC 검색량": st.column_config.NumberColumn("PC 검색량", format="%d"),

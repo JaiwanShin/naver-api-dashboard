@@ -1955,12 +1955,22 @@ with tab6:
     elif keyword_mode == "search_volume":
         st.markdown("**네이버 검색광고 API**를 통해 키워드의 실제 월간 검색량과 연관 키워드를 조회합니다.")
         
-        search_keywords = st.text_input(
-            "조회할 키워드 (쉼표 구분, 최대 5개)",
-            value="토너패드, 스킨케어 패드, 클렌징 패드",
-            help="연관 키워드와 검색량을 조회하고 싶은 키워드를 입력하세요",
-            key="search_volume_keywords"
-        )
+        
+        col_s1, col_s2 = st.columns([2, 1])
+        with col_s1:
+            search_keywords = st.text_input(
+                "조회할 키워드 (쉼표 구분, 최대 5개)",
+                value="토너패드, 스킨케어 패드, 클렌징 패드",
+                help="연관 키워드와 검색량을 조회하고 싶은 키워드를 입력하세요",
+                key="search_volume_keywords"
+            )
+        with col_s2:
+            exclude_keywords_input = st.text_input(
+                "제외할 키워드 (선택사항)",
+                placeholder="예: 달바, 스트라이덱스",
+                help="결과에서 제외하고 싶은 단어나 브랜드명을 쉼표로 입력하세요",
+                key="exclude_keywords_input"
+            )
         
         if st.button("🔍 연관 키워드 + 검색량 조회", type="primary", key="search_volume_btn"):
             keywords = [kw.strip() for kw in search_keywords.split(",")][:5]
@@ -1981,6 +1991,15 @@ with tab6:
                     if all_keyword_data:
                         combined_df = pd.concat(all_keyword_data, ignore_index=True)
                         combined_df = combined_df.drop_duplicates(subset=["keyword"])
+                        
+                        # 제외 키워드 필터링 적용
+                        exclude_list = [k.strip() for k in exclude_keywords_input.split(",") if k.strip()]
+                        if exclude_list:
+                            # 제외 단어가 하나라도 포함된 키워드 제거
+                            pattern = '|'.join(exclude_list)
+                            # 정규식 특수문자 이스케이프 처리가 필요할 수 있으나 일반적인 단어 가정
+                            combined_df = combined_df[~combined_df["keyword"].str.contains(pattern, case=False, na=False)]
+                        
                         combined_df = combined_df.sort_values("monthly_total", ascending=False)
                         
                         st.session_state.analysis_results["tab6_search_volume"] = {

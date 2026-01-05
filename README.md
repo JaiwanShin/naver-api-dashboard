@@ -6,7 +6,7 @@
 
 ## 🚀 대시보드 접속
 
-👉 **[대시보드 바로가기](https://naver-api-dashboard-v3.streamlit.app/)**
+> 대시보드 URL은 보안상 별도로 공유됩니다. 담당자에게 문의하세요.
 
 ---
 
